@@ -8,6 +8,7 @@
 	<div class="col-lg-6">
 		<div class="box-element" id="form-wrapper">
             <form id="form">
+                {% csrf_token %}
                 <div id="user-info">
                     <div class="form-field">
                         <input required class="form-control" type="text" name="name" placeholder="Name..">
@@ -17,7 +18,7 @@
                     </div>
                 </div>
                 
-                <div id="shipping-info">
+                <div id="shipping-info" >
                     <hr>
                     <p>Shipping Information:</p>
                     <hr>
@@ -42,7 +43,56 @@
         <br>
         <div class="box-element hidden" id="payment-info">
             <small>Paypal Options</small>
-            <button id='payment-btn'>Make Payment</button>
+            
+            <!-- Set up a container element for the button -->
+            <div id="paypal-button-container"></div>
+
+
+            
+            <!-- Replace "test" with your own sandbox Business account app client ID -->
+            <script 
+                src="https://www.paypal.com/sdk/js?client-id=ASCYPZr4HpuAquv56D5bCvdiDXiZaQmMSin5UnX3_zlXnOMndvcpzKAUxoMUYqrNzI01-qPGK2gZB9-M&currency=USD">
+            </script>
+            
+
+        <script>
+            var total = "{{order.order_total_price}}"
+
+            paypal.Buttons({
+                onError : function (error) {
+                    alert("Total amount is 0. Please add items to your cart before checking out.")
+                    return false;
+                },
+                // Order is created on the server and the order id is returned
+                createOrder: function(data, actions) {
+                    return actions.order.create({
+                        purchase_units: [{
+                            amount: {
+                                value:parseFloat(total),
+                            }
+                        }]  
+                    });
+                },
+                // Finalize the transaction
+                onApprove: function(data, actions) {
+                    return actions.order.capture().then(function(details) {
+                        // Show a success message to the buyer
+                        submitFormData()
+                    });
+                },
+            }).render('#paypal-button-container');
+
+        </script>
+
+
+
+
+
+
+
+            <!-- <button id='payment-btn'>
+                Make Payment
+            </button> -->
         </div>
 		
 	</div>
@@ -69,13 +119,14 @@
 </div>
 
 <script type="text/javascript">
+
     var shipping = '{{order.shipping}}'
     var total = '{{order.order_total_price|floatformat:2}}'
 
 
-    if (shipping == 'False') {
-        document.getElementById('shipping-info').innerHTML = ''
-    }
+    // if (shipping == 'False') {
+    //     document.getElementById('shipping-info').innerHTML = ''
+    // }
 
     if (currentUser != 'AnonymousUser'){
         document.getElementById('user-info').innerHTML = ''
@@ -89,58 +140,69 @@
     })
 
 
-    document.getElementById('payment-btn').addEventListener('click', function(e){
-        submitFormData()
-    })
+    // document.getElementById('payment-btn').addEventListener('click', function(e){
+    //     submitFormData()
+    // })
 
     function submitFormData() {
-        var userInfo = {
-            'name':null,
-            'email':null,
-            'total':total
-        }
-        var shippingInfo = {
-            'address':null,
-            'city':null,
-            'state':null,
-            'zipcode':null
-        }
-        if (shipping != 'False') {
+
+        if (parseInt(total) > 0){
+            var userInfo = {
+                'name':null,
+                'email':null,
+                'total':total
+            }
+            var shippingInfo = {
+                'address':null,
+                'city':null,
+                'state':null,
+                'zipcode':null
+            }
             shippingInfo.address = form.address.value
-            shippingInfo.city = form.address.city
-            shippingInfo.state = form.address.state
-            shippingInfo.zipcode = form.address.zipcode
-        }
+            shippingInfo.city = form.city.value
+            shippingInfo.state = form.state.value
+            shippingInfo.zipcode = form.zipcode.value
+            
+            if (currentUser == 'AnonymousUser') {
+                userInfo.email = form.email.value
+                userInfo.name = form.name.value
+            }
+            
+            var path = '/process-order/'
+            
+            fetch(  path, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken,
+                    },
+                    mode: 'same-origin',
+                    // Sending data as a string 
+                    body: JSON.stringify({
+                        'userInfo':userInfo,
+                        'shippingInfo':shippingInfo
+                    })
+            })  
+            .then((response)=>{
+                return response.json();
+            }).then((data)=>{
 
-        if (currentUser == 'AnonymousUser') {
-            userInfo.email = form.email.value
-            userInfo.name = form.email.name
-        }
-        var path = '/process-order/'
+                alert('Transaction completed successfully')
+                cart = {} // for unauthenticated useres 
+                document.cookie = "cart=" + JSON.stringify(cart) + ";domain=;path=/"
+                window.location.href = "{% url 'store' %}"
 
-        fetch(  path, 
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrftoken
-                },
-                mode:'same-origin',
-                body: JSON.stingify({
-                    'userInfo':userInfo,
-                    'shippingInfo':shippingInfo
-                })
-        ).then((response)=>{
-            return response.json();
-        }).then((data)=>{
-            console.log(data);
-            alert('Transaction completed successfully')
-            window.location.href = "{% url 'store' %}"
-        })
+            }).catch((error)=>{
+                alert('Transaction failed :(' )
+            })
+        }
+        else{
+            alert('Transaction failed due to empty card')
+        }
+        
 
 
     }
-
-
 </script>
 
 {% endblock content %}

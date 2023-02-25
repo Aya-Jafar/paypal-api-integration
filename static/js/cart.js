@@ -12,8 +12,8 @@ for (let i = 0; i < updateBtns.length; i++) {
 
             // console.log(productID, action)
 
-            if (currentUser === 'AnonymousUser') {
-                console.log('Not logged in')
+            if (currentUser == 'AnonymousUser') {
+                addCookieItem(productID, action)
             }
             else {
                 updateUserCard(productID, action)
@@ -22,11 +22,36 @@ for (let i = 0; i < updateBtns.length; i++) {
     )
 }
 
+function addCookieItem(productID, action) {
+
+    if(action == 'add'){
+        // console.log('Adding...')
+        if(cart[productID] == undefined){
+            cart[productID] = {
+                'quantity':1
+            }
+        }
+        else{
+            cart[productID]['quantity'] += 1
+        }
+        location.reload()
+    }
+    else if (action == 'remove'){
+        cart[productID]['quantity'] -= 1
+        if (cart[productID]['quantity'] <= 0){
+            delete cart[productID]
+        }
+        location.reload()
+    }
+    document.cookie = 'cart=' + JSON.stringify(cart) + ";domain=;path=/"
+
+}
+
 
 function updateUserCard(productID, action) {
-    console.log('User is authenticated , making a POST request to update user card .... ')
+    // console.log('User is authenticated , making a POST request to update user card .... ')
 
-    console.log(productID, action)
+    // console.log(productID, action)
 
     var path = '/update-item/' // path to send data to 
 

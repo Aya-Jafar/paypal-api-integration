@@ -21,14 +21,20 @@
 
 .row{
     padding-top: 25px;
-    /* margin-right: 20px;
-    margin-left: 20px; */
+	padding-left:50px;
+	padding-right: 50px;
+
+	/* padding-bottom: 30px; */
+
+	/* margin-bottom: 130px; */
 }
+
+
 
 body{
 	background-color: hsl(0, 0%, 98%);
-	/* margin: 50px 30px 50px 80px;  */
 }
+
 
 h1,h2,h3,h4,h5,h6{
 	color:hsl(0, 0%, 30%);

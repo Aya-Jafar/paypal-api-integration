@@ -2,7 +2,7 @@
 
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -45,8 +45,39 @@
                 return cookieValue;
         }
         const csrftoken = getToken('csrftoken');
+
+
+        function getCookie(cookieName) {
+		    // Split cookie string and get all individual name=value pairs in an array
+                var cookieArr = document.cookie.split(";");
+                // Loop through the array elements
+                for(var i = 0; i < cookieArr.length; i++) {
+                    var cookiePair = cookieArr[i].split("=");
+                    /* Removing whitespace at the beginning of the cookie name
+                    and compare it with the given string */
+                    if(cookieName == cookiePair[0].trim()) {
+                        // Decode the cookie value and return
+                        return decodeURIComponent(cookiePair[1]);
+                    } 
+                } 
+                // Return null if not found
+                return null;
+        }
+
+        var cart = JSON.parse(getCookie('cart'))
+
+        if (cart == undefined){
+            cart = {}
+            document.cookie ='cart=' + JSON.stringify(cart) + ";domain=;path=/"
+        }
+        
+        // console.log(cart);
+
     </script>
 </head>
+
+
+
 
 
 
@@ -70,7 +101,9 @@
                 <a href="{% url 'cart' %}">
                     <img  height="70" width="60" id="cart-icon" src="{% static 'images/cart.png' %}">
                 </a>
-                <p id="cart-total">0</p>
+                <p id="cart-total">
+                    {{total_items_count}}
+                </p>
 
             </div>
         </div>

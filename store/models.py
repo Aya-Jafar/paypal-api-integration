@@ -31,7 +31,7 @@ class Order(models.Model):
     completed = models.BooleanField(default=False)
     translation_id = models.CharField(max_length=100, null=True, blank=True)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'{self.id} - {self.customer.name}'
 
     @property
@@ -42,6 +42,19 @@ class Order(models.Model):
     def order_total_qnt(self):
         return sum([item.qnt for item in self.orderitem_set.all()])
 
+    @property
+    def count_order_items(self) -> int:
+        return len(self.orderitem_set.all())
+
+
+    @property
+    def shipping(self) -> bool:
+        shipping = False
+        items = self.orderitem_set.all()
+        for item in items:
+            if item.product.digital == False:
+                shipping=True
+        return shipping 
 
 
 class OrderItem(models.Model):
@@ -59,14 +72,6 @@ class OrderItem(models.Model):
     def total(self) -> int:
         return self.product.price * self.qnt
 
-    @property
-    def shipping(self) -> bool:
-        shipping = False
-        items = self.orderitem_set.all()
-        for item in items:
-            if item.product.digital == False:
-                shipping=True
-        return shipping 
 
 
 
@@ -80,5 +85,5 @@ class ShippingAddress(models.Model):
     zipcode = models.CharField(max_length=200, null=False)
     date_added = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.address
